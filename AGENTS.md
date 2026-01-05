@@ -1,4 +1,4 @@
-# ChromaCore Agent Harness
+# ChromaCore Agent Harness (Root AGENTS)
 
 Mission:
 Build and evolve **ChromaCore** as a deterministic semantic memory engine where **meaning is explicit and stable** and **memory is temporal**.
@@ -7,12 +7,35 @@ The **primary sources of truth are the component spec files** defined in this re
 
 ---
 
+## Two Operating Modes
+
+This harness supports **two modes** so bootstrapping doesn’t deadlock.
+
+### Mode 1: Direct Command Mode (Bootstrap / Ad-hoc)
+If the user gives a **direct instruction** (e.g., “create X file”, “set up initialization steps”, “draft a script”, “update docs”), the agent must:
+
+1) Execute the instruction immediately within reasonable scope.
+2) If critical repo details are missing, ask up to **3 focused questions** OR use placeholders (`{{...}}`) and proceed.
+3) Follow global invariants + guardrails.
+4) After completing the work, **recommend** capturing it as a task card (optional, not required).
+
+**Direct Command Mode does NOT require a task card.**
+
+Trigger: Any user message that is a clear instruction to perform work, even if it does not include task card metadata.
+
+---
+
+### Mode 2: Task Card Mode (Preferred for structured work)
+When the user supplies a task card (or clearly indicates they are issuing one), the agent must follow persona isolation.
+
+---
+
 ## Persona Activation (Task Card Metadata → Persona Folder)
 
 Agents are activated by your prompt (task card).  
-The **task card metadata must include a persona name**.
+The task card metadata **should** include a persona name, but it is only **required** in Task Card Mode.
 
-### Mandatory Routing Rule
+### Mandatory Routing Rule (Task Card Mode only)
 1) Read `AGENTS.md` (this file).
 2) Read the task card metadata and extract `persona`.
 3) Load **only** `personas/<persona>/AGENTS.md` and files inside that folder.
@@ -38,7 +61,7 @@ These names must match folder names exactly:
 ## Read Order (Always)
 
 1) `AGENTS.md`
-2) `personas/<persona>/AGENTS.md`
+2) If in Task Card Mode: `personas/<persona>/AGENTS.md`
 3) `WORKFLOW.md`
 4) `CHECKLIST.md`
 5) `PLAN.md` (if multi-step)
@@ -64,7 +87,7 @@ Breaking an invariant requires:
 
 ## Spec Ownership Map (Routing Authority)
 
-Use this map to determine **which persona owns which work**.
+Use this map to determine **which persona owns which work** (when in Task Card Mode, or when you want specialization).
 
 ### algorithms
 Owns:
@@ -109,10 +132,10 @@ Owns:
 
 - Do **not** invent repository commands, frameworks, paths, or APIs.
   - Use placeholders like `{{TEST_CMD}}` when unknown.
-- Do **not** cross persona boundaries.
 - Keep diffs minimal and reviewable.
 - No randomness or time-based inputs in semantic computation.
 - Plugins must never bypass core constraints.
+- Persona isolation applies in Task Card Mode; in Direct Command Mode, specialization is optional.
 
 ---
 
@@ -146,9 +169,8 @@ If blocked on the same subtask **three times**:
 Work is complete only when:
 - Declared outputs exist
 - Verification is run or explicitly deferred with placeholders
-- The related `TODO.md` item is checked with a completion note
 - Any irreversible change is logged in `DECISIONS.md`
-- An entry is appended to the active persona’s `journal.md`
+- An entry is appended to the active persona’s `journal.md` (required in Task Card Mode; recommended in Direct Command Mode)
 
 This file is authoritative.
 Do not weaken it.
